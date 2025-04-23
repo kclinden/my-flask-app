@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban Board</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            padding-bottom: 70px;
+            position: relative;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            box-sizing: border-box;
+            margin-top: 20px;
+        }
+
+        .board {
+            display: flex;
+            gap: 25px;
+            padding: 25px;
+            background-color: #edf2f7;
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-bottom: 80px;
+        }
+
+        .column {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            width: 320px;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.2s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+        .column:hover {
+            background-color: #f7fafc;
+        }
+
+        .column h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .card {
+            background-color: #fff;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            cursor: grab;
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            draggable: true;
+            border-left: 3px solid #4a5568;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-color: #f7fafc;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            flex-grow: 1;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .delete-button {
+            background-color: #e53e3e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .delete-button:hover {
+            background-color: #c53030;
+            transform: scale(1.05);
+        }
+
+        .card-details {
+            font-size: 0.9em;
+            color: #718096;
+            margin-bottom: 8px;
+        }
+
+        #addCardButton {
+            margin-top: 20px;
+            padding: 12px 25px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            width: fit-content;
+            align-self: center;
+        }
+
+        #addCardButton:hover {
+            background-color: #45a049;
+        }
+
+        /* Styles for the lightbox overlay */
+        #lightboxOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+        }
+
+        /* Styles for the lightbox container */
+        #addTaskLightbox {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            width: 90%;
+            max-width: 600px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        #addTaskLightbox.show {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Styles for the close button */
+        #closeLightbox {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #888;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        #closeLightbox:hover {
+            color: #333;
+        }
+
+        /* Styles for the form elements */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 16px;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea,
+        .form-group input[type="date"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 18px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group textarea:focus,
+        .form-group input[type="date"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        #addTaskForm button[type="submit"],
+        #addTaskForm button[type="button"] {
+            padding: 12px 30px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            width: 48%;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        #addTaskForm button[type="button"] {
+            background-color: #f44336;
+        }
+
+        #addTaskForm button[type="submit"]:hover {
+            background-color: #45a049;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        #addTaskForm button[type="button"]:hover {
+            background-color: #d32f2f;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .board {
+                padding: 15px;
+                gap: 20px;
+            }
+
+            .column {
+                width: 100%;
+                min-height: auto;
+            }
+
+            #addTaskLightbox {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .form-group input[type="text"],
+            .form-group textarea,
+            .form-group input[type="date"] {
+                font-size: 16px;
+            }
+
+            #addTaskForm button[type="submit"],
+            #addTaskForm button[type="button"] {
+                font-size: 16px;
+                padding: 10px 20px;
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            #addTaskForm button[type="button"] {
+                margin-top: 0;
+            }
+
+            .add-card-section button,
+            .add-column-section button {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #addTaskButton {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+
+            .form-group label {
+                font-size: 14px;
+            }
+
+            .board {
+                gap: 15px;
+            }
+        }
+
+        .add-column-section {
+            padding: 15px;
+            margin-bottom: 25px;
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background-color: #f7fafc;
+        }
+
+        .add-column-section input[type="text"] {
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            flex-grow: 1;
+            font-size: 18px;
+            transition: border-color 0.3s ease;
+        }
+
+        .add-column-section input[type="text"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-column-section button {
+            padding: 12px 25px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .add-column-section button:hover {
+            background-color: #45a049;
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>My Kanban Board</h1>
+        <button id="addCardButton">Add New Task</button>
+        <div id="lightboxOverlay"></div>
+        <div id="addTaskLightbox">
+            <button id="closeLightbox">&times;</button>
+            <h2>Add New Task</h2>
+            <form id="addTaskForm">
+                <div class="form-group">
+                    <label for="taskName">Task Name:</label>
+                    <input type="text" id="taskName" name="taskName" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Description:</label>
+                    <textarea id="taskDescription" name="taskDescription"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="taskAssignee">Assignee:</label>
+                    <input type="text" id="taskAssignee" name="taskAssignee">
+                </div>
+                <div class="form-group">
+                    <label for="taskDueDate">Due Date:</label>
+                    <input type="date" id="taskDueDate" name="taskDueDate">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit">Add Task</button>
+                    <button type="button" id="cancelAddTask">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="add-column-section">
+            <input type="text" id="new-column-name" placeholder="Enter column name">
+            <button onclick="addColumn()">Add Column</button>
+        </div>
+
+        <div class="board" id="kanban-board">
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const lightboxOverlay = document.getElementById('lightboxOverlay');
+            const addTaskLightbox = document.getElementById('addTaskLightbox');
+            const addCardButton = document.getElementById('addCardButton');
+            const closeLightboxButton = document.getElementById('closeLightbox');
+            const cancelAddTaskButton = document.getElementById('cancelAddTask');
+            const addTaskForm = document.getElementById('addTaskForm');
+
+            // Show the lightbox
+            function showLightbox() {
+                lightboxOverlay.style.display = 'block';
+                addTaskLightbox.classList.add('show'); // Ensure the 'show' class is added
+            }
+
+            // Hide the lightbox
+            function hideLightbox() {
+                lightboxOverlay.style.display = 'none';
+                addTaskLightbox.classList.remove('show'); // Ensure the 'show' class is removed
+            }
+
+            // Event listeners
+            addCardButton.addEventListener('click', showLightbox);
+            closeLightboxButton.addEventListener('click', hideLightbox);
+            cancelAddTaskButton.addEventListener('click', hideLightbox);
+
+            // Close lightbox when clicking outside of it
+            lightboxOverlay.addEventListener('click', (event) => {
+                if (event.target === lightboxOverlay) {
+                    hideLightbox();
+                }
+            });
+
+            addTaskForm.addEventListener('submit', (event) => {
+                event.preventDefault(); // Prevent the default form submission
+                const taskName = document.getElementById('taskName').value;
+                const taskDescription = document.getElementById('taskDescription').value;
+                const assignee = document.getElementById('taskAssignee').value;
+                const dueDate = document.getElementById('taskDueDate').value;
+
+                if (taskName) {
+                    // Fetch the first column ID dynamically
+                    const firstColumn = document.querySelector('.column');
+                    if (firstColumn) {
+                        const columnId = firstColumn.dataset.columnId;
+                        addCard(columnId, taskName, assignee, dueDate); // Pass the correct column ID
+                    } else {
+                        alert('No columns available to add the task.');
+                    }
+                    hideLightbox();
+                    addTaskForm.reset();
+                } else {
+                    alert('Please enter a task name!');
+                }
+            });
+
+            fetchBoardData();
+        });
+
+        function addColumn() {
+            const newColumnName = document.getElementById('new-column-name').value;
+            if (newColumnName) {
+                const boardId = 'default_board'; // Assuming a single board for now
+                fetch(`/api/boards/${boardId}/columns`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `name=${newColumnName}`
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log(`Column "${newColumnName}" created with ID: ${data.new_column_id}`);
+                            fetchBoardData(); // Call a function to refresh the board
+                            document.getElementById('new-column-name').value = ''; // Clear input
+                        } else {
+                            console.error('Failed to create column');
+                        }
+                    });
+            }
+        }
+
+        function addCard(columnId, cardTitle, assignee, dueDate) { // Added columnId parameter
+            // In a real application, you'd send this data to your backend API
+            //  and get back the new card's ID.  For this example, we'll simulate
+            //  an ID and add the card directly to the UI.
+            if (!cardTitle) {
+                alert("Please enter a card title");
+                return;
+            }
+
+            fetch(`/api/columns/${columnId}/cards`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `title=${cardTitle}&board_id=default_board&assignee=${assignee}&due_date=${dueDate}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log(`Card "${cardTitle}" created in column ${columnId} with ID: ${data.new_card_id}, Assignee: ${assignee}, Due Date: ${dueDate}`);
+                        fetchBoardData(); // Refresh the board
+                    } else {
+                        console.error('Failed to create card');
+                    }
+                });
+        }
+
+        function deleteCard(cardId) {
+            fetch(`/api/cards/${cardId}`, {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log(`Card with ID ${cardId} deleted`);
+                        fetchBoardData(); // Refresh the board
+                    } else {
+                        console.error(`Failed to delete card ${cardId}:`, data.error);
+                    }
+                });
+        }
+
+        function fetchBoardData() {
+            const boardId = 'default_board';
+            fetch(`/api/board/${boardId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const boardElement = document.getElementById('kanban-board');
+                    boardElement.innerHTML = ''; // Clear and re-render
+                    data.columns.forEach(renderColumn);
+
+                    // Attach drag listeners to cards AFTER rendering
+                    const cards = document.querySelectorAll('.card');
+                    cards.forEach(card => {
+                        card.addEventListener('dragstart', function (event) {
+                            event.dataTransfer.setData('text/plain', this.dataset.cardId);
+                        });
+                    });
+                });
+        }
+
+        function renderColumn(column) {
+            const boardElement = document.getElementById('kanban-board');
+            const columnDiv = document.createElement('div');
+            columnDiv.classList.add('column');
+            columnDiv.dataset.columnId = column.id;
+
+            const columnTitle = document.createElement('h2');
+            columnTitle.textContent = column.name;
+            columnDiv.appendChild(columnTitle);
+
+            column.cards.forEach(card => {
+                const cardDiv = document.createElement('div');
+                cardDiv.classList.add('card');
+                cardDiv.dataset.cardId = card.id;
+                cardDiv.draggable = true;
+
+                const cardHeader = document.createElement('div');
+                cardHeader.classList.add('card-header');
+                const titleSpan = document.createElement('span');
+                titleSpan.classList.add('card-title');
+                titleSpan.textContent = card.title;
+                cardHeader.appendChild(titleSpan);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('delete-button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = function (event) {
+                    event.stopPropagation(); // Prevent card drag when clicking delete
+                    deleteCard(card.id);
+                };
+                cardHeader.appendChild(deleteButton);
+                cardDiv.appendChild(cardHeader);
+
+                // Display the task ID
+                const taskIdDiv = document.createElement('div');
+                taskIdDiv.classList.add('card-details');
+                taskIdDiv.textContent = `Task ID: ${card.task_id}`;  // Display task_id
+                cardDiv.appendChild(taskIdDiv);
+
+                if (card.assignee) {
+                    const assigneeDiv = document.createElement('div');
+                    assigneeDiv.classList.add('card-details');
+                    assigneeDiv.textContent = `Assignee: ${card.assignee}`;
+                    cardDiv.appendChild(assigneeDiv);
+                }
+
+                if (card.due_date) {
+                    const dueDateDiv = document.createElement('div');
+                    dueDateDiv.classList.add('card-details');
+                    dueDateDiv.textContent = `Due Date: ${new Date(card.due_date).toLocaleDateString()}`;
+                    cardDiv.appendChild(dueDateDiv);
+                }
+
+                columnDiv.appendChild(cardDiv);
+            });
+
+            boardElement.appendChild(columnDiv);
+
+            columnDiv.addEventListener('dragover', function (event) {
+                event.preventDefault();
+            });
+
+            columnDiv.addEventListener('drop', function (event) {
+                const cardId = event.dataTransfer.getData('text/plain');
+                const draggedCard = document.querySelector(`[data-card-id="${cardId}"]`);
+                if (draggedCard) {
+                    this.appendChild(draggedCard);
+                    fetch(`/api/cards/${cardId}/move`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `new_column_id=${this.dataset.columnId}`
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log(`Card ${cardId} moved to column ${this.dataset.columnId}`);
+                            } else {
+                                console.error('Failed to move card:', data.error);
+                            }
+                        });
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,4 +1,5 @@
 # my-flask-app
+This is a basic kanban flask app that can be tested locally or deployed into AWS. It is intententionally insecure for use with Wiz Code.
 
 ## Run Database to Test
 ```

@@ -44,6 +44,6 @@ jobs:
 
       - name: Fetch digest of Docker image for Graph enrichment
         run: |
-          DIGEST=$(docker inspect --format='{{.Id}}' "$IMAGE_ID")
+          DIGEST=$(docker inspect --format='{{.Id}}' $IMAGE_ID)
           echo "IMAGE_DIGEST=$DIGEST" >> $GITHUB_ENV
           ./wizcli docker tag --image "$DIGEST"

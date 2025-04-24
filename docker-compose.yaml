@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   web:
-    image: my-flask-todo:0.4.1
+    image: klinden/my-flask-app:latest
     ports:
       - "8080:5000"
     depends_on:

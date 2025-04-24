@@ -1,6 +1,9 @@
 # Use an official Python runtime as a parent image
 FROM python:3.9-slim-buster
 
+# Install curl for healthcheck in ECS
+RUN apt-get update && apt-get install -y curl
+
 # Set the working directory to /app
 WORKDIR /app
 

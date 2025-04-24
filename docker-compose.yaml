@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  web:
+    image: my-flask-todo:0.4.1
+    ports:
+      - "8080:5000"
+    depends_on:
+      - db
+    restart: always
+    environment:
+      - MONGO_URI=mongodb://myuser:mypassword@db:27017/todo?authSource=todo
+      - MONGO_DATABASE=todo
+  db:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
+    environment:
+      - MONGO_INIT_HOST=localhost # This is ignored, but kept for consistency
+      - MONGO_INIT_PORT=27017 # This is ignored, but kept for consistency    
+      - MONGO_INIT_DATABASE=todo
+      - MONGO_INIT_USERNAME=myuser
+      - MONGO_INIT_PASSWORD=mypassword
+    restart: always

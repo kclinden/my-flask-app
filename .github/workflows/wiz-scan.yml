@@ -27,7 +27,7 @@ jobs:
         run: |
           cd $SCAN_PATH
           IMAGE_ID=$(docker build -q . --tag $IMAGE_NAME:$TAG)
-          echo "$IMAGE_ID"
+          echo $IMAGE_ID
           echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
 
       - name: Download Wiz CLI

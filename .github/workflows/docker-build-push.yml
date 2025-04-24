@@ -23,31 +23,39 @@ jobs:
         run: |
           # Default version
           VERSION="1.0"
+          NEXT_VERSION="v1.0"
 
           # Try to get the latest version tag
           latest_tag=$(git describe --abbrev=0 --tags 2>/dev/null)
           if [[ $? -eq 0 ]]; then
+            echo "Found previous tag: $latest_tag"
             # Extract the numeric part of the tag (e.g., "1.0" from "v1.0")
             version_number=$(echo "$latest_tag" | sed 's/^v//g')
+            echo "Extracted version number: $version_number"
 
             # Split the version into major and minor
             IFS='.' read -r MAJOR MINOR <<< "$version_number"
+            echo "Major version: $MAJOR, Minor version: $MINOR"
 
             # Increment the minor version
             MINOR=$((MINOR + 1))
+            echo "Incremented minor version: $MINOR"
 
             # If minor version is greater than 9, increment major and reset minor
             if [[ $MINOR -gt 9 ]]; then
               MAJOR=$((MAJOR + 1))
               MINOR=0
+              echo "Minor version > 9, incrementing major to: $MAJOR, minor to: $MINOR"
             fi
             VERSION="$MAJOR.$MINOR"
+            NEXT_VERSION="v$VERSION"
+            echo "Calculated next version: $VERSION"
           else
             echo "No previous version tag found. Starting at 1.0"
           fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "NEXT_VERSION=v$VERSION" >> $GITHUB_OUTPUT # for use in tags
-      - name: Build and Push Docker Image
+          echo "NEXT_VERSION=$NEXT_VERSION" >> $GITHUB_OUTPUT # for use in tags
+      - name: Build and Push Docker Image to GHCR
         uses: docker/build-push-action@v2
         with:
           context: .
@@ -55,3 +63,6 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }}
             ghcr.io/${{ github.repository }}:latest
+        # Add these lines for detailed logging
+        env:
+          DOCKER_CLI_DEBUG: 1

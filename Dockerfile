@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:bookworm
+FROM python:slim-bookworm
 
 # Install curl for healthcheck in ECS
 RUN apt-get update && apt-get install -y curl

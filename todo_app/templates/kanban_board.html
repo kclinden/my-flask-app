@@ -52,6 +52,7 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             transition: background-color 0.2s ease;
             border: 1px solid #e2e8f0;
+            position: relative;
         }
 
         .column:hover {
@@ -84,10 +85,27 @@
             border-left: 3px solid #4a5568;
         }
 
+        .card.low {
+            border-left-color: green;
+        }
+
+        .card.medium {
+            border-left-color: yellow;
+        }
+
+        .card.high {
+            border-left-color: red;
+        }
+
         .card:hover {
             transform: translateY(-4px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             background-color: #f7fafc;
+        }
+
+        .card.done {
+            text-decoration: line-through;
+            opacity: 0.6;
         }
 
         .card-header {
@@ -127,6 +145,16 @@
             margin-bottom: 8px;
         }
 
+        .priority-dropdown {
+            margin-top: 10px;
+            padding: 5px;
+            font-size: 0.9em;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            background-color: #f7fafc;
+            cursor: pointer;
+        }
+
         #addCardButton {
             margin-top: 20px;
             padding: 12px 25px;
@@ -146,7 +174,6 @@
             background-color: #45a049;
         }
 
-        /* Styles for the lightbox overlay */
         #lightboxOverlay {
             position: fixed;
             top: 0;
@@ -158,7 +185,6 @@
             display: none;
         }
 
-        /* Styles for the lightbox container */
         #addTaskLightbox {
             position: fixed;
             top: 50%;
@@ -182,7 +208,6 @@
             transform: translate(-50%, -50%) scale(1);
         }
 
-        /* Styles for the close button */
         #closeLightbox {
             position: absolute;
             top: 15px;
@@ -200,7 +225,6 @@
             color: #333;
         }
 
-        /* Styles for the form elements */
         .form-group {
             margin-bottom: 25px;
         }
@@ -268,7 +292,6 @@
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
         }
 
-        /* Responsive adjustments */
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -371,6 +394,93 @@
             background-color: #45a049;
             box-shadow: 0 3px 7px rgba(0, 0, 0, 0.2);
         }
+
+        .delete-column-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #e53e3e;
+            transition: color 0.2s ease;
+        }
+
+        .delete-column-button:hover {
+            color: #c53030;
+        }
+
+        /* Lightbox for card description */
+        #descriptionLightbox {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            width: 90%;
+            max-width: 600px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        #descriptionLightbox.show {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #descriptionOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+        }
+
+        #closeDescriptionLightbox {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #888;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        #closeDescriptionLightbox:hover {
+            color: #333;
+        }
+
+        /* Styling for the "Show Description" button */
+        .show-description-button {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-top: 10px;
+        }
+
+        .show-description-button:hover {
+            background-color: #2b6cb0;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 
@@ -406,6 +516,13 @@
             </form>
         </div>
 
+        <div id="descriptionOverlay"></div>
+        <div id="descriptionLightbox">
+            <button id="closeDescriptionLightbox">&times;</button>
+            <h2>Task Description</h2>
+            <p id="descriptionContent"></p>
+        </div>
+
         <div class="add-column-section">
             <input type="text" id="new-column-name" placeholder="Enter column name">
             <button onclick="addColumn()">Add Column</button>
@@ -423,25 +540,45 @@
             const closeLightboxButton = document.getElementById('closeLightbox');
             const cancelAddTaskButton = document.getElementById('cancelAddTask');
             const addTaskForm = document.getElementById('addTaskForm');
+            const descriptionOverlay = document.getElementById('descriptionOverlay');
+            const descriptionLightbox = document.getElementById('descriptionLightbox');
+            const closeDescriptionLightboxButton = document.getElementById('closeDescriptionLightbox');
+            const descriptionContent = document.getElementById('descriptionContent');
 
-            // Show the lightbox
             function showLightbox() {
                 lightboxOverlay.style.display = 'block';
-                addTaskLightbox.classList.add('show'); // Ensure the 'show' class is added
+                addTaskLightbox.classList.add('show');
             }
 
-            // Hide the lightbox
             function hideLightbox() {
                 lightboxOverlay.style.display = 'none';
-                addTaskLightbox.classList.remove('show'); // Ensure the 'show' class is removed
+                addTaskLightbox.classList.remove('show');
             }
 
-            // Event listeners
+            function showDescriptionLightbox(description) {
+                descriptionContent.textContent = description || 'No description available.';
+                descriptionOverlay.style.display = 'block';
+                descriptionLightbox.style.display = 'block';
+                descriptionLightbox.classList.add('show');
+            }
+
+            function hideDescriptionLightbox() {
+                descriptionOverlay.style.display = 'none';
+                descriptionLightbox.style.display = 'none';
+                descriptionLightbox.classList.remove('show');
+            }
+
             addCardButton.addEventListener('click', showLightbox);
             closeLightboxButton.addEventListener('click', hideLightbox);
             cancelAddTaskButton.addEventListener('click', hideLightbox);
 
-            // Close lightbox when clicking outside of it
+            closeDescriptionLightboxButton.addEventListener('click', hideDescriptionLightbox);
+            descriptionOverlay.addEventListener('click', (event) => {
+                if (event.target === descriptionOverlay) {
+                    hideDescriptionLightbox();
+                }
+            });
+
             lightboxOverlay.addEventListener('click', (event) => {
                 if (event.target === lightboxOverlay) {
                     hideLightbox();
@@ -449,18 +586,17 @@
             });
 
             addTaskForm.addEventListener('submit', (event) => {
-                event.preventDefault(); // Prevent the default form submission
+                event.preventDefault();
                 const taskName = document.getElementById('taskName').value;
                 const taskDescription = document.getElementById('taskDescription').value;
                 const assignee = document.getElementById('taskAssignee').value;
                 const dueDate = document.getElementById('taskDueDate').value;
 
                 if (taskName) {
-                    // Fetch the first column ID dynamically
                     const firstColumn = document.querySelector('.column');
                     if (firstColumn) {
                         const columnId = firstColumn.dataset.columnId;
-                        addCard(columnId, taskName, assignee, dueDate); // Pass the correct column ID
+                        addCard(columnId, taskName, assignee, dueDate);
                     } else {
                         alert('No columns available to add the task.');
                     }
@@ -472,36 +608,41 @@
             });
 
             fetchBoardData();
+            enableCardDragAndDrop();
         });
 
         function addColumn() {
             const newColumnName = document.getElementById('new-column-name').value;
             if (newColumnName) {
-                const boardId = 'default_board'; // Assuming a single board for now
+                const boardId = 'default_board';
                 fetch(`/api/boards/${boardId}/columns`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `name=${newColumnName}`
+                    body: `name=${encodeURIComponent(newColumnName)}`
                 })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
                             console.log(`Column "${newColumnName}" created with ID: ${data.new_column_id}`);
-                            fetchBoardData(); // Call a function to refresh the board
-                            document.getElementById('new-column-name').value = ''; // Clear input
+                            fetchBoardData();
+                            document.getElementById('new-column-name').value = '';
                         } else {
-                            console.error('Failed to create column');
+                            console.error(`Failed to create column: ${data.error}`);
+                            alert(`Error: ${data.error}`);
                         }
+                    })
+                    .catch(error => {
+                        console.error('Error creating column:', error);
+                        alert('An error occurred while creating the column.');
                     });
+            } else {
+                alert('Please enter a column name.');
             }
         }
 
-        function addCard(columnId, cardTitle, assignee, dueDate) { // Added columnId parameter
-            // In a real application, you'd send this data to your backend API
-            //  and get back the new card's ID.  For this example, we'll simulate
-            //  an ID and add the card directly to the UI.
+        function addCard(columnId, cardTitle, assignee, dueDate) {
             if (!cardTitle) {
                 alert("Please enter a card title");
                 return;
@@ -518,7 +659,7 @@
                 .then(data => {
                     if (data.success) {
                         console.log(`Card "${cardTitle}" created in column ${columnId} with ID: ${data.new_card_id}, Assignee: ${assignee}, Due Date: ${dueDate}`);
-                        fetchBoardData(); // Refresh the board
+                        fetchBoardData();
                     } else {
                         console.error('Failed to create card');
                     }
@@ -533,11 +674,33 @@
                 .then(data => {
                     if (data.success) {
                         console.log(`Card with ID ${cardId} deleted`);
-                        fetchBoardData(); // Refresh the board
+                        fetchBoardData();
                     } else {
                         console.error(`Failed to delete card ${cardId}:`, data.error);
                     }
                 });
+        }
+
+        function deleteColumn(columnId) {
+            if (confirm('Are you sure you want to delete this column and all its cards?')) {
+                fetch(`/api/columns/${columnId}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log(`Column with ID ${columnId} deleted`);
+                            fetchBoardData();
+                        } else {
+                            console.error(`Failed to delete column ${columnId}:`, data.error);
+                            alert(`Error: ${data.error}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting column:', error);
+                        alert('An error occurred while deleting the column.');
+                    });
+            }
         }
 
         function fetchBoardData() {
@@ -549,14 +712,38 @@
                     boardElement.innerHTML = ''; // Clear and re-render
                     data.columns.forEach(renderColumn);
 
-                    // Attach drag listeners to cards AFTER rendering
-                    const cards = document.querySelectorAll('.card');
-                    cards.forEach(card => {
-                        card.addEventListener('dragstart', function (event) {
-                            event.dataTransfer.setData('text/plain', this.dataset.cardId);
-                        });
-                    });
+                    enableCardDragAndDrop(); // Only enable card drag-and-drop
                 });
+        }
+
+        function updateCardPriority(cardId, priority) {
+            fetch(`/api/cards/${cardId}/priority`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `priority=${priority}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log(`Priority for card ${cardId} updated to ${priority}`);
+                        fetchBoardData(); // Refresh the board
+                    } else {
+                        console.error(`Failed to update priority for card ${cardId}:`, data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating priority:', error);
+                });
+        }
+
+        function updateCardVisuals(cardDiv, columnName) {
+            if (columnName === 'Done') {
+                cardDiv.classList.add('done');
+            } else {
+                cardDiv.classList.remove('done');
+            }
         }
 
         function renderColumn(column) {
@@ -567,13 +754,25 @@
 
             const columnTitle = document.createElement('h2');
             columnTitle.textContent = column.name;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.classList.add('delete-column-button');
+            deleteButton.innerHTML = '🗑️';
+            deleteButton.onclick = function () {
+                deleteColumn(column.id);
+            };
+            columnDiv.appendChild(deleteButton);
+
             columnDiv.appendChild(columnTitle);
 
             column.cards.forEach(card => {
                 const cardDiv = document.createElement('div');
-                cardDiv.classList.add('card');
+                cardDiv.classList.add('card', card.priority || 'low'); // Default to 'low' if no priority
                 cardDiv.dataset.cardId = card.id;
                 cardDiv.draggable = true;
+
+                // Apply visual changes if the card is in the "Done" column
+                updateCardVisuals(cardDiv, column.name);
 
                 const cardHeader = document.createElement('div');
                 cardHeader.classList.add('card-header');
@@ -586,16 +785,15 @@
                 deleteButton.classList.add('delete-button');
                 deleteButton.textContent = 'Delete';
                 deleteButton.onclick = function (event) {
-                    event.stopPropagation(); // Prevent card drag when clicking delete
+                    event.stopPropagation();
                     deleteCard(card.id);
                 };
                 cardHeader.appendChild(deleteButton);
                 cardDiv.appendChild(cardHeader);
 
-                // Display the task ID
                 const taskIdDiv = document.createElement('div');
                 taskIdDiv.classList.add('card-details');
-                taskIdDiv.textContent = `Task ID: ${card.task_id}`;  // Display task_id
+                taskIdDiv.textContent = `Task ID: ${card.task_id}`;
                 cardDiv.appendChild(taskIdDiv);
 
                 if (card.assignee) {
@@ -612,6 +810,32 @@
                     cardDiv.appendChild(dueDateDiv);
                 }
 
+                // Add priority dropdown
+                const priorityDropdown = document.createElement('select');
+                priorityDropdown.classList.add('priority-dropdown');
+                ['low', 'medium', 'high'].forEach(priority => {
+                    const option = document.createElement('option');
+                    option.value = priority;
+                    option.textContent = priority.charAt(0).toUpperCase() + priority.slice(1);
+                    if (card.priority === priority) {
+                        option.selected = true;
+                    }
+                    priorityDropdown.appendChild(option);
+                });
+                priorityDropdown.onchange = function () {
+                    updateCardPriority(card.id, this.value);
+                };
+                cardDiv.appendChild(priorityDropdown);
+
+                // Add "Show Description" button
+                const showDescriptionButton = document.createElement('button');
+                showDescriptionButton.textContent = 'Show Description';
+                showDescriptionButton.classList.add('show-description-button');
+                showDescriptionButton.onclick = function () {
+                    showDescriptionLightbox(card.description);
+                };
+                cardDiv.appendChild(showDescriptionButton);
+
                 columnDiv.appendChild(cardDiv);
             });
 
@@ -619,30 +843,113 @@
 
             columnDiv.addEventListener('dragover', function (event) {
                 event.preventDefault();
+                if (event.dataTransfer.getData('type') === 'card') {
+                    const afterElement = getDragAfterElement(this, event.clientY, '.card');
+                    const draggingCard = document.querySelector(`[data-card-id="${event.dataTransfer.getData('cardId')}"]`);
+                    if (afterElement == null) {
+                        this.appendChild(draggingCard);
+                    } else {
+                        this.insertBefore(draggingCard, afterElement);
+                    }
+                }
             });
 
             columnDiv.addEventListener('drop', function (event) {
-                const cardId = event.dataTransfer.getData('text/plain');
-                const draggedCard = document.querySelector(`[data-card-id="${cardId}"]`);
-                if (draggedCard) {
-                    this.appendChild(draggedCard);
-                    fetch(`/api/cards/${cardId}/move`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `new_column_id=${this.dataset.columnId}`
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                console.log(`Card ${cardId} moved to column ${this.dataset.columnId}`);
-                            } else {
-                                console.error('Failed to move card:', data.error);
-                            }
-                        });
+                if (event.dataTransfer.getData('type') === 'card') {
+                    const cardId = event.dataTransfer.getData('cardId');
+                    const newColumnId = this.dataset.columnId;
+                    const newOrder = Array.from(this.querySelectorAll('.card')).findIndex(
+                        card => card.dataset.cardId === cardId
+                    );
+
+                    moveCard(cardId, newColumnId, newOrder);
+
+                    // Update visuals for the moved card
+                    const draggingCard = document.querySelector(`[data-card-id="${cardId}"]`);
+                    updateCardVisuals(draggingCard, this.querySelector('h2').textContent);
                 }
             });
+        }
+
+        function enableCardDragAndDrop() {
+            const cards = document.querySelectorAll('.card');
+            const columns = document.querySelectorAll('.column');
+
+            cards.forEach(card => {
+                card.setAttribute('draggable', true);
+
+                card.addEventListener('dragstart', function (event) {
+                    event.dataTransfer.setData('type', 'card');
+                    event.dataTransfer.setData('cardId', this.dataset.cardId);
+                    event.dataTransfer.setData('sourceColumnId', this.closest('.column').dataset.columnId);
+                });
+            });
+
+            columns.forEach(column => {
+                column.addEventListener('dragover', function (event) {
+                    event.preventDefault();
+                    if (event.dataTransfer.getData('type') === 'card') {
+                        const afterElement = getDragAfterElement(this, event.clientY, '.card');
+                        const draggingCard = document.querySelector(`[data-card-id="${event.dataTransfer.getData('cardId')}"]`);
+                        if (afterElement == null) {
+                            this.appendChild(draggingCard);
+                        } else {
+                            this.insertBefore(draggingCard, afterElement);
+                        }
+                    }
+                });
+
+                column.addEventListener('drop', function (event) {
+                    if (event.dataTransfer.getData('type') === 'card') {
+                        const cardId = event.dataTransfer.getData('cardId');
+                        const sourceColumnId = event.dataTransfer.getData('sourceColumnId');
+                        const newColumnId = this.dataset.columnId;
+                        const newOrder = Array.from(this.querySelectorAll('.card')).findIndex(
+                            card => card.dataset.cardId === cardId
+                        );
+
+                        if (sourceColumnId !== newColumnId) {
+                            moveCard(cardId, newColumnId, newOrder);
+                        }
+                    }
+                });
+            });
+        }
+
+        function getDragAfterElement(container, position, selector = '.column') {
+            const draggableElements = [...container.querySelectorAll(`${selector}:not(.dragging)`)];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = position - (selector === '.column' ? box.left : box.top) - (selector === '.column' ? box.width : box.height) / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function moveCard(cardId, newColumnId, newOrder) {
+            fetch(`/api/cards/${cardId}/move`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `new_column_id=${newColumnId}&new_order=${newOrder}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log(`Card ${cardId} moved to column ${newColumnId} at order ${newOrder}`);
+                        fetchBoardData();
+                    } else {
+                        console.error(`Failed to move card ${cardId}:`, data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error moving card:', error);
+                });
         }
     </script>
 </body>

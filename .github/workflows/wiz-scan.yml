@@ -9,7 +9,7 @@ permissions:
   contents: read  # This is required for actions/checkout
 env:
   aws_role: "arn:aws:iam::515966505040:role/kclinden-github" # Replace with your AWS role ARN
-  aws_repo: "515966505040.dkr.ecr.us-east-1.amazonaws.com/klinden/my-flask-app"
+  aws_repo: "klinden/my-flask-app"
   aws_region: "us-east-1"
 
 jobs:
@@ -51,12 +51,15 @@ jobs:
       - name: Build and Push Docker Image
         id: build-push
         uses: docker/build-push-action@v2
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ env.aws_repo }}       
         with:
           context: .
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}
+            ${{env.REGISTRY}}/${{env.REPOSITORY}}:latest
+            ${{env.REGISTRY}}/${{env.REPOSITORY}}:${{ github.sha }}
             ghcr.io/${{ github.repository }}:${{ github.sha }}
             ghcr.io/${{ github.repository }}:latest
 

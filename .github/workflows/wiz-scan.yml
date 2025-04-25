@@ -55,7 +55,7 @@ jobs:
             ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest
 
       - name: Download Wiz CLI
-        run: curl -o wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-arm64 && chmod +x wizcli
+        run: curl -o wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-amd64 && chmod +x wizcli
 
       - name: Authenticate to Wiz
         run: ./wizcli auth --id "$WIZ_CLIENT_ID" --secret "$WIZ_CLIENT_SECRET"

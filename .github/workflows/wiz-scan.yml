@@ -14,7 +14,7 @@ env:
 jobs:
   wiz-cli-image-scan:
     name: "Wiz-cli Image Scan"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # You can keep ubuntu-latest, the buildx action handles the architecture.
     env:
       SCAN_PATH: "." # Set the relative path in the repo to build the image from
       POLICY: "Default vulnerabilities policy" # Set the desired Wiz CLI policy to use
@@ -30,29 +30,28 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{secrets.aws_role}} 
+          role-to-assume: ${{secrets.aws_role}}
           aws-region: ${{env.aws_region}}
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
       # Checkout the repository to the GitHub Actions runner
-
       - name: Check out repository
         uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-          
-      - name: Build and Push Docker Image
+
+      - name: Build and Push Docker Image (ARM64 Only)
         id: build-push
-        uses: docker/build-push-action@v6  
+        uses: docker/build-push-action@v6
         with:
-        #  platforms: linux/arm64
+          platforms: linux/arm64 # Changed to only build for ARM64
           context: .
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest-arm64 #Added arch to tag
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}-arm64 #Added arch to tag
 
       - name: Download Wiz CLI
         run: curl -o wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-amd64 && chmod +x wizcli
@@ -67,7 +66,7 @@ jobs:
         run: docker image ls
 
       - name: Run wiz-cli docker image scan
-        run: ./wizcli docker scan --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }} --policy "$POLICY"
+        run: ./wizcli docker scan --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}-arm64 --policy "$POLICY" # Changed tag to arm64
 
       - name: Fetch digest of Docker image for Graph enrichment
-        run: ./wizcli docker tag --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest
+        run: ./wizcli docker tag --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest-arm64

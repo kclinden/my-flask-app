@@ -50,8 +50,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest-arm64
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}-arm64
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}
 
       - name: Download Wiz CLI
         run: curl -o wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-amd64 && chmod +x wizcli
@@ -63,10 +63,10 @@ jobs:
           WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
 
       - name: List images
-        run: docker image ls
+        run: docker pull -platform=linux/arm64 ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest my-flask-app-arm64.tar
 
       - name: Run wiz-cli docker image scan
-        run: ./wizcli docker scan --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}-arm64 --policy "$POLICY" # Changed tag to arm64
+        run: ./wizcli docker scan --image my-flask-app-arm64.tar --policy "$POLICY" 
 
       - name: Fetch digest of Docker image for Graph enrichment
-        run: ./wizcli docker tag --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest-arm64
+        run: ./wizcli docker tag --image -i my-flask-app-arm64.tar --digest ${{ steps.build-push.outputs.digest }}

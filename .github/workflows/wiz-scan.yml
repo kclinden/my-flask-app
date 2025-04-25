@@ -56,6 +56,7 @@ jobs:
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest
 
       - name: Download Wiz CLI
         run: curl -o wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-amd64 && chmod +x wizcli

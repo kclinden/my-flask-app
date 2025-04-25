@@ -29,6 +29,8 @@ jobs:
           IMAGE_ID=$(docker build -q . --tag $IMAGE_NAME:$TAG)
           echo $IMAGE_ID
           echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_ENV
+          echo $WIZ_ENV
+          echo $POLICY
 
       - name: Download Wiz CLI
         run: curl -o wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-amd64 && chmod +x wizcli
@@ -45,5 +47,6 @@ jobs:
       - name: Fetch digest of Docker image for Graph enrichment
         run: |
           DIGEST=$(docker inspect --format='{{.Id}}' $IMAGE_ID)
+          echo $DIGEST
           echo "IMAGE_DIGEST=$DIGEST" >> $GITHUB_ENV
           ./wizcli docker tag --image $DIGEST

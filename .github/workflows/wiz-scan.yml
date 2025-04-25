@@ -63,7 +63,7 @@ jobs:
           WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
 
       - name: List images
-        run: docker pull -platform=linux/arm64 ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest my-flask-app-arm64.tar
+        run: docker pull --platform=linux/arm64 ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest my-flask-app-arm64.tar
 
       - name: Run wiz-cli docker image scan
         run: ./wizcli docker scan --image my-flask-app-arm64.tar --policy "$POLICY" 

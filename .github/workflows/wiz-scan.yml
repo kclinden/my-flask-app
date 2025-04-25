@@ -4,6 +4,14 @@ on:
     branches:
       - main # Or your main branch
 
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+env:
+  aws_role: "arn:aws:iam::515966505040:role/kclinden-github" # Replace with your AWS role ARN
+  aws_repo: "515966505040.dkr.ecr.us-east-1.amazonaws.com/klinden/my-flask-app"
+  aws_region: "us-east-1"
+
 jobs:
   wiz-cli-image-scan:
     name: "Wiz-cli Image Scan"
@@ -19,7 +27,17 @@ jobs:
         shell: bash
 
     steps:
+      #Get AWS Creds
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{env.aws_role}} 
+          aws-region: ${{env.aws_region}}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
       # Checkout the repository to the GitHub Actions runner
+
       - name: Check out repository
         uses: actions/checkout@v2
 
@@ -37,6 +55,8 @@ jobs:
           context: .
           push: true
           tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}
             ghcr.io/${{ github.repository }}:${{ github.sha }}
             ghcr.io/${{ github.repository }}:latest
 
@@ -50,7 +70,7 @@ jobs:
           WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
 
       - name: Run wiz-cli docker image scan
-        run: ./wizcli docker scan --image ghcr.io/${{ github.repository }}:latest --policy "$POLICY"
+        run: ./wizcli docker scan --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest --policy "$POLICY"
 
       - name: Fetch digest of Docker image for Graph enrichment
-        run: ./wizcli docker tag --image ghcr.io/${{ github.repository }}:latest
+        run: ./wizcli docker tag --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest

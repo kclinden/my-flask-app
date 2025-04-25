@@ -50,8 +50,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest-arm64 #Added arch to tag
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}-arm64 #Added arch to tag
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest-arm64
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}-arm64
 
       - name: Download Wiz CLI
         run: curl -o wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-amd64 && chmod +x wizcli

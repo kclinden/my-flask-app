@@ -55,7 +55,6 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest
             ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}
 
       - name: Download Wiz CLI
@@ -68,7 +67,7 @@ jobs:
           WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
 
       - name: Run wiz-cli docker image scan
-        run: ./wizcli docker scan --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest --policy "$POLICY"
+        run: ./wizcli docker scan --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }} --policy "$POLICY"
 
       - name: Fetch digest of Docker image for Graph enrichment
         run: ./wizcli docker tag --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest

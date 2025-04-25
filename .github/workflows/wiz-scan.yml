@@ -72,4 +72,4 @@ jobs:
         run: ./wizcli docker scan --image my-flask-app-arm64.tar --policy "$POLICY" 
 
       - name: Fetch digest of Docker image for Graph enrichment
-        run: ./wizcli docker tag --image -i my-flask-app-arm64.tar --digest ${{ steps.build-push.outputs.digest }}
+        run: ./wizcli docker tag --image my-flask-app-arm64.tar --digest ${{ steps.build-push.outputs.digest }}

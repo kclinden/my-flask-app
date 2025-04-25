@@ -14,7 +14,7 @@ env:
 jobs:
   wiz-cli-image-scan:
     name: "Wiz-cli Image Scan"
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     env:
       SCAN_PATH: "." # Set the relative path in the repo to build the image from
       POLICY: "Default vulnerabilities policy" # Set the desired Wiz CLI policy to use

@@ -64,7 +64,7 @@ jobs:
           WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
 
       - name: Run wiz-cli docker image scan
-        run: ./wizcli docker scan --image ${{ needs.build.outputs.imageid }} --policy "$POLICY"
+        run: ./wizcli docker scan --image ghcr.io/${{ github.repository }}:latest --policy "$POLICY"
 
       - name: Fetch digest of Docker image for Graph enrichment
         run: |

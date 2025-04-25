@@ -47,11 +47,12 @@ jobs:
         id: build-push
         uses: docker/build-push-action@v6  
         with:
-          platforms: linux/arm64
+        #  platforms: linux/arm64
           context: .
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }}
 
       - name: Download Wiz CLI
         run: curl -o wizcli https://downloads.wiz.io/wizcli/latest/wizcli-linux-amd64 && chmod +x wizcli
@@ -66,7 +67,7 @@ jobs:
         run: docker image ls
 
       - name: Run wiz-cli docker image scan
-        run: ./wizcli docker scan --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest --policy "$POLICY"
+        run: ./wizcli docker scan --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:${{ github.sha }} --policy "$POLICY"
 
       - name: Fetch digest of Docker image for Graph enrichment
         run: ./wizcli docker tag --image ${{ steps.login-ecr.outputs.registry }}/${{ env.aws_repo }}:latest
